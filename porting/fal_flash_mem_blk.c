@@ -22,12 +22,10 @@ static struct mutex g_mem_blk_mutex;
 #define UNLOCK()
 #endif
 
-static unsigned char *flash_mem;
-
 struct fal_flash_dev mem_blk;
 static int _init(void)
 {
-    pr_info("mem_blk init.\n");
+    pr_debug("mem_blk init.\n");
 
 #ifdef LOCKER_ENABLE
     // create a mutex
@@ -35,36 +33,80 @@ static int _init(void)
 #endif
 
     // update mem_blk.len
-    pr_info("part_size: %d\n", _part_size);
-    mem_blk.len = _part_size;
+    pr_debug("MEM Size(%d).\n", param_part_size);
+    mem_blk.len = param_part_size;
 
     return 0;
+}
+
+// 懒加载
+static char *_get_mem_blk_addr(void)
+{
+    static char *mem_blk_addr = NULL;
+    if (!mem_blk_addr)
+    {
+        pr_debug("mem_blk_addr is NULL, malloc(%d).\n", mem_blk.len);
+
+        // 初始化mem_blk_addr
+        mem_blk_addr = flashdb_malloc(mem_blk.len);
+    }
+    return mem_blk_addr;
 }
 
 static int _read(long offset, uint8_t *buf, size_t size)
 {
     int ret = 0;
+    char *mem_blk_addr;
+
     LOCK();
 
+    mem_blk_addr = _get_mem_blk_addr();
+    if (mem_blk_addr)
+    {
+        memcpy(buf, mem_blk_addr + offset, size);
+        ret = size;
+    }
+
     UNLOCK();
+
     return ret;
 }
 
 static int _write(long offset, const uint8_t *buf, size_t size)
 {
     int ret = 0;
+    char *mem_blk_addr;
+
     LOCK();
 
+    mem_blk_addr = _get_mem_blk_addr();
+    if (mem_blk_addr)
+    {
+        memcpy(mem_blk_addr + offset, buf, size);
+        ret = size;
+    }
+
     UNLOCK();
+
     return ret;
 }
 
 static int _erase(long offset, size_t size)
 {
     int ret = 0;
+    char *mem_blk_addr;
+
     LOCK();
 
+    mem_blk_addr = _get_mem_blk_addr();
+    if (mem_blk_addr)
+    {
+        memset(mem_blk_addr + offset, 0xFF, size);
+        ret = size;
+    }
+
     UNLOCK();
+
     return ret;
 }
 
@@ -83,22 +125,14 @@ struct fal_flash_dev mem_blk = {
     .write_gran = 1, // 1 byte write granularity
 };
 
-int fal_flash_mem_blk_detect(fal_partition_t parts, const char *part_name)
+int fal_flash_mem_blk_detect(fal_partition_t parts)
 {
-    int len = mem_blk.len;
-
-    // 初始化flash_mem
-    flash_mem = flashdb_malloc(len);
-    if (!flash_mem)
-        return -ENOMEM;
-    memset(flash_mem, 0xFF, len); // 擦除内存
-
     // 初始化part
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].name, part_name);
+    strcpy(parts[0].name, param_part_name);
     strcpy(parts[0].flash_name, MEM_FLASH_DEV_NAME);
     parts[0].offset = 0;
-    parts[0].len = len;
+    parts[0].len = mem_blk.len;
 
     return 0;
 }

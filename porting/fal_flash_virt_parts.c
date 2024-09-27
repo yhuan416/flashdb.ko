@@ -10,34 +10,51 @@
 static unsigned char flash_mem[FLASH_SIZE];
 static fal_partition_t parts;
 
-extern int fal_flash_mem_blk_detect(fal_partition_t parts, const char *part_name);
+extern int fal_flash_mem_blk_detect(fal_partition_t parts);
+extern int fal_flash_nor_flash_detect(fal_partition_t parts);
+
 static int detect_partition(void)
 {
-    pr_info("virt_parts start detect partition.\n");
+    int ret = 0;
+    int count = 0;
+
+    pr_debug("virt_parts start detect partition.\n");
 
     parts = (fal_partition_t)flash_mem;
 
+#ifdef STORE_VIRT_PARTS_TO_TABLE
     // store the partition of virt_parts
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].name, "virtparts");
+    strcpy(parts[0].name, "VirtParts");
     strcpy(parts[0].flash_name, VIRT_PARTS_FLASH_DEV_NAME);
     parts[0].offset = 0;
     parts[0].len = FLASH_SIZE;
 
+    count++;
+#endif
+
+    ret = fal_flash_nor_flash_detect(&parts[count]);
+    if (ret < 0)
+    {
+        pr_err("fal_flash_nor_flash_detect fail.\n");
+        return -1;
+    }
+    count += ret;
+
     // 保底采用mem_blk模拟一个flash
-    if (fal_flash_mem_blk_detect(&parts[1], _part_name))
+    ret = fal_flash_mem_blk_detect(&parts[count]);
+    if (ret < 0)
     {
         pr_err("fal_flash_mem_blk_detect fail.\n");
         return -1;
     }
+    count += ret;
 
-    return 0;
+    return count;
 }
 
 static int _init(void)
 {
-    pr_info("virt_parts init.\n");
-
     return detect_partition();
 }
 

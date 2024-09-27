@@ -30,16 +30,23 @@ CONFIG_DEBUG_LOGS := y
 
 # porting
 EXTRA_CFLAGS += -I$(PWD)/porting/inc
-MODULE_OBJECTS += porting/fal_flash_virt_parts.o porting/fal_flash_mem_blk.o
+MODULE_OBJECTS += porting/fal_flash_virt_parts.o
+MODULE_OBJECTS += porting/fal_flash_mem_blk.o
+MODULE_OBJECTS += porting/fal_flash_nor_flash.o
 
 # Fal
 EXTRA_CFLAGS += -I$(FLASHDB_PATH)/port/fal/inc
-MODULE_OBJECTS += FlashDB/port/fal/src/fal.o FlashDB/port/fal/src/fal_flash.o FlashDB/port/fal/src/fal_partition.o 
+MODULE_OBJECTS += FlashDB/port/fal/src/fal.o
+MODULE_OBJECTS += FlashDB/port/fal/src/fal_flash.o
+MODULE_OBJECTS += FlashDB/port/fal/src/fal_partition.o 
 
 # FlashDB
 EXTRA_CFLAGS += -I$(FLASHDB_PATH)/inc
-# MODULE_OBJECTS += FlashDB/src/fdb_file.o FlashDB/src/fdb_kvdb.o FlashDB/src/fdb_tsdb.o FlashDB/src/fdb_utils.o FlashDB/src/fdb.o
-MODULE_OBJECTS += FlashDB/src/fdb_kvdb.o FlashDB/src/fdb_tsdb.o FlashDB/src/fdb_utils.o FlashDB/src/fdb.o
+# MODULE_OBJECTS += FlashDB/src/fdb_file.o # not used
+MODULE_OBJECTS += FlashDB/src/fdb_kvdb.o
+MODULE_OBJECTS += FlashDB/src/fdb_tsdb.o
+MODULE_OBJECTS += FlashDB/src/fdb_utils.o
+MODULE_OBJECTS += FlashDB/src/fdb.o
 
 obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-y := $(MODULE_OBJECTS)

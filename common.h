@@ -17,11 +17,13 @@
 #endif
 
 #define DEV_MAJOR (0)        // 主设备号
-#define DEV_NAME "flashdb"   // 设备名
+#define NODE_NAME "flashdb"  // 设备节点名
+#define DEV_NAME "kvdb"   // 设备名
 #define CLASS_NAME "flashdb" // 类名
 
-extern int _part_size;
-extern char _part_name[];
+extern int param_part_size;
+extern char param_part_name[];
+extern char param_mtd_name[];
 
 extern void *flashdb_malloc(size_t size);
 

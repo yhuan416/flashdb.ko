@@ -24,12 +24,40 @@ static struct device *device;
 
 static struct file_operations flashdb_fops;
 
-void *flashdb_malloc(size_t size)
+ssize_t partition_show(struct class *class, struct class_attribute *attr,
+                       char *buf)
 {
-    if (device)
-        return devm_kmalloc(device, size, GFP_KERNEL);
+    return fal_print_part_table(buf, PAGE_SIZE);
+}
+static CLASS_ATTR_RO(partition);
 
-    return NULL;
+static struct class *flashdb_create_class(void)
+{
+    int ret;
+    struct class *new_class = NULL;
+
+    new_class = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(class))
+    {
+        pr_err("flashdb: class create failed!\r\n");
+        return NULL;
+    }
+
+    ret = class_create_file(new_class, &class_attr_partition);
+    if (ret < 0)
+    {
+        pr_err("flashdb: class create file failed!\r\n");
+        class_destroy(new_class);
+        return NULL;
+    }
+
+    return new_class;
+}
+
+static void _print_params(void)
+{
+    pr_info("flashdb: part_name = %s, part_size = %d, mtd_name = %s\r\n",
+            param_part_name, param_part_size, param_mtd_name);
 }
 
 static int __init _driver_init(void)
@@ -37,7 +65,8 @@ static int __init _driver_init(void)
     int ret;
 
     pr_info("flashdb init.\n");
-    pr_info("part: %s\n", _part_name);
+
+    _print_params();
 
     // 创建设备号
     if (DEV_MAJOR)
@@ -61,12 +90,13 @@ static int __init _driver_init(void)
         minor = MINOR(devid);
     }
 
-    pr_info("flashdb: major = %d, minor = %d\r\n", major, minor);
+    pr_debug("flashdb: major = %d, minor = %d\r\n", major, minor);
 
     // 注册字符设备驱动
     flashdb_cdev.owner = THIS_MODULE;
     cdev_init(&flashdb_cdev, &flashdb_fops);
 
+    // 注册字符设备
     ret = cdev_add(&flashdb_cdev, devid, 1);
     if (ret < 0)
     {
@@ -74,13 +104,15 @@ static int __init _driver_init(void)
         goto del_unregister;
     }
 
-    class = class_create(THIS_MODULE, CLASS_NAME);
-    if (IS_ERR(class))
+    // 创建类
+    class = flashdb_create_class();
+    if (!class)
     {
-        pr_err("flashdb: class create failed!\r\n");
+        pr_err("flashdb: create class failed!\r\n");
         goto del_cdev;
     }
 
+    // 创建设备
     device = device_create(class, NULL, devid, NULL, DEV_NAME);
     if (IS_ERR(device))
     {
@@ -88,8 +120,10 @@ static int __init _driver_init(void)
         goto destroy_class;
     }
 
+    // 初始化fal
     ret = fal_init();
-    if (ret < 0) {
+    if (ret < 0)
+    {
         pr_err("fal init failed!\r\n");
         goto destroy_device;
     }
@@ -135,13 +169,30 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("yhuan416 <yhuan416@foxmail.com>");
 MODULE_DESCRIPTION("FlashDB LKM");
 
-char _part_name[FAL_DEV_NAME_MAX] = DEFAULT_PART_NAME;
-module_param_string(part, _part_name, FAL_DEV_NAME_MAX, 0);
+// 模块参数, 目标分区名, 默认为: 'flashdb'
+char param_part_name[FAL_DEV_NAME_MAX] = DEFAULT_PART_NAME;
+module_param_string(part, param_part_name, FAL_DEV_NAME_MAX, 0);
 MODULE_PARM_DESC(part, "Partition name of flashdb (Default: flashdb).");
 
-int _part_size = (32 * 1024);
-module_param_named(size, _part_size, int, 0444);
+// 模块参数, MEM分区大小, 默认为: 32K
+// 当物理分区中没有找到 param_part_name 对应的分区时, 会使用 MEM 分区. 该参数用于配置 MEM 分区大小
+int param_part_size = (32 * 1024);
+module_param_named(size, param_part_size, int, 0444);
 MODULE_PARM_DESC(size, "Partition size of memblk (Default: 32K).");
+
+// 模块参数, MTD设备名, 默认为: 'spi0.0'
+// 用于指定 MTD 设备
+char param_mtd_name[FAL_DEV_NAME_MAX] = "spi0.0";
+module_param_string(mtd, param_mtd_name, FAL_DEV_NAME_MAX, 0);
+MODULE_PARM_DESC(mtd, "Using MTD device name, (Default: spi0.0).");
+
+void *flashdb_malloc(size_t size)
+{
+    if (device)
+        return devm_kmalloc(device, size, GFP_KERNEL);
+
+    return NULL;
+}
 
 static int _open(struct inode *inode, struct file *filp)
 {
