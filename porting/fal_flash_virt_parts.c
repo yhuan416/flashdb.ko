@@ -2,65 +2,60 @@
 
 #include <linux/mtd/mtd.h>
 
+#include "common.h"
+
 #define FLASH_SIZE (1 * 1024)
 #define SECTOR_SIZE (1 * 1024)
-#define FAL_PART_MAGIC_WORD (0x45503130)
 
 static unsigned char flash_mem[FLASH_SIZE];
 static fal_partition_t parts;
 
-extern char partition_name[FAL_DEV_NAME_MAX];
+extern int fal_flash_mem_blk_detect(fal_partition_t parts);
+extern int fal_flash_nor_flash_detect(fal_partition_t parts);
 
-int detech_partition(void)
+static int detect_partition(void)
 {
-    struct mtd_info *mtd = NULL;
-    int i = 0;
+    int ret = 0;
+    int count = 0;
+
+    pr_debug("virt_parts start detect partition.\n");
 
     parts = (fal_partition_t)flash_mem;
 
-    for (i = 0; i < 64; i++)
-    {
-        mtd = get_mtd_device(NULL, i);
-        if (!IS_ERR(mtd))
-        {
-            printk(KERN_INFO "mtd device found: %s\n", mtd->name);
-            printk(KERN_INFO "\tdevice size: %llu\n", mtd->size);
-            printk(KERN_INFO "\tdevice erasesize: %u\n", mtd->erasesize);
-            printk(KERN_INFO "\tdevice writesize: %u\n", mtd->writesize);
-
-            put_mtd_device(mtd);
-        }
-        else
-        {
-            continue;
-        }
-    }
-
+#ifdef STORE_VIRT_PARTS_TO_TABLE
+    // store the partition of virt_parts
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].name, partition_name);
-    strcpy(parts[0].flash_name, MEM_FLASH_DEV_NAME);
+    strcpy(parts[0].name, "VirtParts");
+    strcpy(parts[0].flash_name, VIRT_PARTS_FLASH_DEV_NAME);
     parts[0].offset = 0;
-    parts[0].len = 32 * 1024;
+    parts[0].len = FLASH_SIZE;
 
-    parts[1].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[1].name, "a");
-    strcpy(parts[1].flash_name, MEM_FLASH_DEV_NAME);
-    parts[1].offset = 0;
-    parts[1].len = 32 * 1024;
+    count++;
+#endif
 
-    parts[2].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[2].name, "b");
-    strcpy(parts[2].flash_name, MEM_FLASH_DEV_NAME);
-    parts[2].offset = 0;
-    parts[2].len = 32 * 1024;
+    ret = fal_flash_nor_flash_detect(&parts[count]);
+    if (ret < 0)
+    {
+        pr_err("fal_flash_nor_flash_detect fail.\n");
+        return -1;
+    }
+    count += ret;
 
-    return 0;
+    // 保底采用mem_blk模拟一个flash
+    ret = fal_flash_mem_blk_detect(&parts[count]);
+    if (ret < 0)
+    {
+        pr_err("fal_flash_mem_blk_detect fail.\n");
+        return -1;
+    }
+    count += ret;
+
+    return count;
 }
 
 static int _init(void)
 {
-    detech_partition();
-    return 0;
+    return detect_partition();
 }
 
 static int _read(long offset, uint8_t *buf, size_t size)
@@ -93,7 +88,7 @@ static int _erase(long offset, size_t size)
     return 0;
 }
 
-const struct fal_flash_dev virt_parts = {
+struct fal_flash_dev virt_parts = {
     .name = VIRT_PARTS_FLASH_DEV_NAME,
     .addr = 0x0,             // address is relative to beginning of partition; 0x0 is start of the partition
     .len = FLASH_SIZE,       // flash total size

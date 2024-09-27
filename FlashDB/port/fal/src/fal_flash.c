@@ -26,6 +26,7 @@ static uint8_t init_ok = 0;
  */
 int fal_flash_init(void)
 {
+    int ret = 0;
     size_t i;
 
     if (init_ok)
@@ -41,8 +42,17 @@ int fal_flash_init(void)
         /* init flash device on flash table */
         if (device_table[i]->ops.init)
         {
-            device_table[i]->ops.init();
+            ret = device_table[i]->ops.init();
         }
+
+        if (ret < 0)
+        {
+            log_e("Flash device | %*.*s | addr: 0x%08x | len: 0x%08x | blk_size: 0x%08x |initialized failed.",
+                  FAL_DEV_NAME_MAX, FAL_DEV_NAME_MAX, device_table[i]->name, device_table[i]->addr, device_table[i]->len,
+                  device_table[i]->blk_size);
+            return ret;
+        }
+
         log_d("Flash device | %*.*s | addr: 0x%08x | len: 0x%08x | blk_size: 0x%08x |initialized finish.",
                 FAL_DEV_NAME_MAX, FAL_DEV_NAME_MAX, device_table[i]->name, device_table[i]->addr, device_table[i]->len,
                 device_table[i]->blk_size);

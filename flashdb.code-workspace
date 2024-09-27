@@ -1,0 +1,28 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+    "settings": {
+        "files.exclude": {
+            "**/.git": true,
+            "**/.svn": true,
+            "**/.hg": true,
+            "**/CVS": true,
+            "**/.DS_Store": true,
+            "**/Thumbs.db": true,
+
+            // 临时文件
+            "**/*.cmd": true,
+            "**/*.o": true,
+            "**/*.mod": true,
+            "**/*.mod.*": true,
+            "**/*.symvers": true,
+            "**/*.order": true,
+        },
+        "files.associations": {
+            "typeinfo": "c"
+        }
+    }
+}

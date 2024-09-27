@@ -11,21 +11,23 @@
 // #define FAL_PART_HAS_TABLE_CFG
 
 #define NOR_FLASH_DEV_NAME "norflash0"
-#define VIRT_PARTS_FLASH_DEV_NAME "virtparts"
-#define MEM_FLASH_DEV_NAME "memblk"
+#define VIRT_PARTS_FLASH_DEV_NAME "virt"
+#define MEM_FLASH_DEV_NAME "MEM"
 
 #define FAL_PART_TABLE_FLASH_DEV_NAME VIRT_PARTS_FLASH_DEV_NAME
 #define FAL_PART_TABLE_END_OFFSET ((1 * 1024) - 1)
 
 /* ===================== Flash device Configuration ========================= */
-extern const struct fal_flash_dev virt_parts;
-extern const struct fal_flash_dev mem_blk;
+extern struct fal_flash_dev virt_parts;
+extern struct fal_flash_dev mem_blk;
+extern struct fal_flash_dev nor_flash0;
 
 /* flash device table */
 #define FAL_FLASH_DEV_TABLE \
     {                       \
         &virt_parts,        \
         &mem_blk,           \
+        &nor_flash0,        \
     }
 /* ===================== Flash device Configuration ========================= */
 
