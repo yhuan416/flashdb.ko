@@ -7,7 +7,7 @@
 #include <linux/types.h>
 #include <linux/string.h>
 
-// #define FAL_DEBUG 1
+#define FAL_DEBUG 1
 // #define FAL_PART_HAS_TABLE_CFG
 
 #define NOR_FLASH_DEV_NAME "norflash0"
@@ -18,8 +18,8 @@
 #define FAL_PART_TABLE_END_OFFSET ((1 * 1024) - 1)
 
 /* ===================== Flash device Configuration ========================= */
-extern const struct fal_flash_dev virt_parts;
-extern const struct fal_flash_dev mem_blk;
+extern struct fal_flash_dev virt_parts;
+extern struct fal_flash_dev mem_blk;
 
 /* flash device table */
 #define FAL_FLASH_DEV_TABLE \

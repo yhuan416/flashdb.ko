@@ -11,8 +11,7 @@
 
 #include "fal.h"
 
-#define DEV_MAJOR (0)      // 主设备号
-#define DEV_NAME "flashdb" // 设备名
+#include "common.h"
 
 static int major;
 static int minor;
@@ -20,56 +19,25 @@ static dev_t devid;
 
 static struct cdev flashdb_cdev;
 
-// static struct class *class;
-// static struct device *device;
+static struct class *class;
+static struct device *device;
 
-#ifndef DEFAULT_PART_NAME
-#define DEFAULT_PART_NAME "flashdb"
-#endif
+static struct file_operations flashdb_fops;
 
-char partition_name[FAL_DEV_NAME_MAX] = DEFAULT_PART_NAME;
-module_param_string(part, partition_name, FAL_DEV_NAME_MAX, 0);
-
-static int _open(struct inode *inode, struct file *filp)
+void *flashdb_malloc(size_t size)
 {
-    printk("flashdb open!\r\n");
-    return 0;
-}
+    if (device)
+        return devm_kmalloc(device, size, GFP_KERNEL);
 
-static ssize_t _read(struct file *filp, char __user *buf, size_t cnt, loff_t *offt)
-{
-    int ret = 0;
-    printk("flashdb read!\r\n");
-    return ret;
+    return NULL;
 }
-
-static ssize_t _write(struct file *filp, const char __user *buf, size_t cnt, loff_t *offt)
-{
-    int ret = 0;
-    printk("flashdb write!\r\n");
-    return ret;
-}
-
-static int _release(struct inode *inode, struct file *filp)
-{
-    printk("flashdb release!\r\n");
-    return 0;
-}
-
-static struct file_operations flashdb_fops = {
-    .owner = THIS_MODULE,
-    .open = _open,
-    .read = _read,
-    .write = _write,
-    .release = _release,
-};
 
 static int __init _driver_init(void)
 {
     int ret;
 
-    printk(KERN_INFO "flashdb init\n");
-    printk(KERN_INFO "partition_name: %s\n", partition_name);
+    pr_info("flashdb init.\n");
+    pr_info("part: %s\n", _part_name);
 
     // 创建设备号
     if (DEV_MAJOR)
@@ -106,16 +74,52 @@ static int __init _driver_init(void)
         goto del_unregister;
     }
 
+    class = class_create(THIS_MODULE, CLASS_NAME);
+    if (IS_ERR(class))
+    {
+        pr_err("flashdb: class create failed!\r\n");
+        goto del_cdev;
+    }
+
+    device = device_create(class, NULL, devid, NULL, DEV_NAME);
+    if (IS_ERR(device))
+    {
+        pr_err("flashdb: device create failed!\r\n");
+        goto destroy_class;
+    }
+
+    ret = fal_init();
+    if (ret < 0) {
+        pr_err("fal init failed!\r\n");
+        goto destroy_device;
+    }
+
     return 0;
+
+destroy_device:
+    device_destroy(class, devid);
+
+destroy_class:
+    class_destroy(class);
+
+del_cdev:
+    cdev_del(&flashdb_cdev);
 
 del_unregister:
     unregister_chrdev_region(devid, 1);
+
     return -EFAULT;
 }
 
 static void __exit _driver_exit(void)
 {
-    printk(KERN_INFO "flashdb exit\n");
+    pr_info("flashdb exit.\n");
+
+    // 销毁设备
+    device_destroy(class, devid);
+
+    // 销毁类
+    class_destroy(class);
 
     // 注销字符设备驱动
     cdev_del(&flashdb_cdev);
@@ -130,3 +134,45 @@ module_exit(_driver_exit);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("yhuan416 <yhuan416@foxmail.com>");
 MODULE_DESCRIPTION("FlashDB LKM");
+
+char _part_name[FAL_DEV_NAME_MAX] = DEFAULT_PART_NAME;
+module_param_string(part, _part_name, FAL_DEV_NAME_MAX, 0);
+MODULE_PARM_DESC(part, "Partition name of flashdb (Default: flashdb).");
+
+int _part_size = (32 * 1024);
+module_param_named(size, _part_size, int, 0444);
+MODULE_PARM_DESC(size, "Partition size of memblk (Default: 32K).");
+
+static int _open(struct inode *inode, struct file *filp)
+{
+    pr_info("flashdb open\r\n");
+    return 0;
+}
+
+static ssize_t _read(struct file *filp, char __user *buf, size_t cnt, loff_t *offt)
+{
+    int ret = 0;
+    pr_info("flashdb read\r\n");
+    return ret;
+}
+
+static ssize_t _write(struct file *filp, const char __user *buf, size_t cnt, loff_t *offt)
+{
+    int ret = 0;
+    pr_info("flashdb write\r\n");
+    return ret;
+}
+
+static int _release(struct inode *inode, struct file *filp)
+{
+    pr_info("flashdb release\r\n");
+    return 0;
+}
+
+static struct file_operations flashdb_fops = {
+    .owner = THIS_MODULE,
+    .open = _open,
+    .read = _read,
+    .write = _write,
+    .release = _release,
+};

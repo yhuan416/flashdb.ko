@@ -20,6 +20,9 @@
             "**/*.mod.*": true,
             "**/*.symvers": true,
             "**/*.order": true,
+        },
+        "files.associations": {
+            "typeinfo": "c"
         }
     }
 }
