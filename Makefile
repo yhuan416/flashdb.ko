@@ -17,7 +17,7 @@ endif
 MODULE_NAME = flashdb
 
 # 源文件
-MODULE_OBJECTS += main.o common.o
+MODULE_OBJECTS += main.o common.o kvdb.o
 
 # 编译选项
 EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror
@@ -31,8 +31,8 @@ CONFIG_DEBUG_LOGS := y
 # porting
 EXTRA_CFLAGS += -I$(PWD)/porting/inc
 MODULE_OBJECTS += porting/fal_flash_virt_parts.o
-MODULE_OBJECTS += porting/fal_flash_mem_blk.o
-MODULE_OBJECTS += porting/fal_flash_nor_flash.o
+MODULE_OBJECTS += porting/fal_flash_kvdb_mem.o
+MODULE_OBJECTS += porting/fal_flash_kvdb_norflash.o
 
 # Fal
 EXTRA_CFLAGS += -I$(FLASHDB_PATH)/port/fal/inc
@@ -54,7 +54,7 @@ $(MODULE_NAME)-y := $(MODULE_OBJECTS)
 .PHONY: clean info
 
 all:
-	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) C=1 modules
+	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) modules
 
 clean:
 	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) clean

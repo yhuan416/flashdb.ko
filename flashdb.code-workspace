@@ -22,7 +22,11 @@
             "**/*.order": true,
         },
         "files.associations": {
-            "typeinfo": "c"
+            "typeinfo": "c",
+            "module.h": "c",
+            "kvdb.h": "c",
+            "common.h": "c",
+            "fal.h": "c"
         }
     }
 }

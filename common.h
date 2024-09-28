@@ -24,6 +24,4 @@ extern char param_mtd_name[];
 extern int is_valid_device(const char *name);
 extern int is_valid_partition(const char *name);
 
-extern void *flashdb_malloc(size_t size);
-
 #endif // __COMMON_H__

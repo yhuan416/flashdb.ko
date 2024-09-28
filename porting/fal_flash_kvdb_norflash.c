@@ -55,7 +55,7 @@ static int _init(void)
     kvdb_mtd = mtd;
 
     master = mtd_get_master(mtd);
-    strcpy(nor_flash0.name, master->name);
+    snprintf(nor_flash0.name, FAL_DEV_NAME_MAX, "%s@%d", master->name, mtd->index);
 
     put_mtd_device(mtd);
 

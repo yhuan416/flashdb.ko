@@ -1,6 +1,7 @@
 #include <fal.h>
 
 #include "common.h"
+#include "kvdb.h"
 
 #define LOCKER_ENABLE
 
@@ -48,7 +49,7 @@ static char *_get_mem_blk_addr(void)
         pr_debug("mem_blk_addr is NULL, malloc(%d).\n", mem_blk.len);
 
         // 初始化mem_blk_addr
-        mem_blk_addr = flashdb_malloc(mem_blk.len);
+        mem_blk_addr = kvdb_malloc(mem_blk.len);
     }
     return mem_blk_addr;
 }
