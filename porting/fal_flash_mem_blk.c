@@ -117,7 +117,7 @@ static int _erase(long offset, size_t size)
 #define SECTOR_SIZE (4096)
 
 struct fal_flash_dev mem_blk = {
-    .name = MEM_FLASH_DEV_NAME,
+    .name = "MemKV",
     .addr = 0x0,             // address is relative to beginning of partition; 0x0 is start of the partition
     .len = FLASH_SIZE,       // size of the partition as specified in partitions.csv
     .blk_size = SECTOR_SIZE, // must be 4096 bytes
@@ -130,7 +130,7 @@ int fal_flash_mem_blk_detect(fal_partition_t parts)
     // 初始化part
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
     strcpy(parts[0].name, param_part_name);
-    strcpy(parts[0].flash_name, MEM_FLASH_DEV_NAME);
+    strcpy(parts[0].flash_name, "MemKV");
     parts[0].offset = 0;
     parts[0].len = mem_blk.len;
 

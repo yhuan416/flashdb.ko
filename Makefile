@@ -17,11 +17,11 @@ endif
 MODULE_NAME = flashdb
 
 # 源文件
-MODULE_OBJECTS += main.o
+MODULE_OBJECTS += main.o common.o
 
 # 编译选项
 EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror
-# CFLAGS_main.o = -DDEBUG
+EXTRA_CFLAGS += -DDEBUG
 
 FLASHDB_PATH := $(PWD)/FlashDB
 
@@ -54,7 +54,7 @@ $(MODULE_NAME)-y := $(MODULE_OBJECTS)
 .PHONY: clean info
 
 all:
-	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) modules
+	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) C=1 modules
 
 clean:
 	make ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) -C $(KERNEL) M=$(PWD) clean

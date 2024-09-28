@@ -12,10 +12,6 @@
 #define FAL_PART_MAGIC_WORD (0x45503130)
 #endif
 
-#ifndef DEFAULT_PART_NAME
-#define DEFAULT_PART_NAME "flashdb"
-#endif
-
 #define DEV_MAJOR (0)        // 主设备号
 #define NODE_NAME "flashdb"  // 设备节点名
 #define DEV_NAME "kvdb"   // 设备名
@@ -24,6 +20,9 @@
 extern int param_part_size;
 extern char param_part_name[];
 extern char param_mtd_name[];
+
+extern int is_valid_device(const char *name);
+extern int is_valid_partition(const char *name);
 
 extern void *flashdb_malloc(size_t size);
 

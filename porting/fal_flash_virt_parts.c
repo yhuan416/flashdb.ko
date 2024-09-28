@@ -8,10 +8,67 @@
 #define SECTOR_SIZE (1 * 1024)
 
 static unsigned char flash_mem[FLASH_SIZE];
+
 static fal_partition_t parts;
+static volatile int partition_table_is_initialed = 0;
+
+static int detect_partition(void);
+
+static int _init(void)
+{
+    memset(flash_mem, 0xFF, FLASH_SIZE);
+    return 0;
+}
+
+static int _read(long offset, uint8_t *buf, size_t size)
+{
+    int ret = size;
+
+    if (offset < 0)
+    {
+        return 0;
+    }
+
+    if (offset + size > FLASH_SIZE)
+    {
+        return 0;
+    }
+
+    // 懒加载, 进行读取的时候检测分区
+    if (!partition_table_is_initialed) {
+        detect_partition();
+        partition_table_is_initialed = 1;
+    }
+
+    memcpy(buf, (uint8_t *)flash_mem + offset, size);
+    return ret;
+}
+
+static int _write(long offset, const uint8_t *buf, size_t size)
+{
+    // 不支持写入
+    return 0;
+}
+
+static int _erase(long offset, size_t size)
+{
+    // 不支持擦除
+    return 0;
+}
+
+struct fal_flash_dev virt_parts = {
+    .name = VIRT_PARTS_FLASH_DEV_NAME,
+    .addr = 0x0,             // address is relative to beginning of partition; 0x0 is start of the partition
+    .len = FLASH_SIZE,       // flash total size
+    .blk_size = SECTOR_SIZE, // blk size
+    .ops = {_init, _read, _write, _erase},
+    .write_gran = 1, // 1 byte write granularity
+};
 
 extern int fal_flash_mem_blk_detect(fal_partition_t parts);
 extern int fal_flash_nor_flash_detect(fal_partition_t parts);
+
+#define STORE_VIRT_PARTS_TO_TABLE
 
 static int detect_partition(void)
 {
@@ -52,47 +109,3 @@ static int detect_partition(void)
 
     return count;
 }
-
-static int _init(void)
-{
-    return detect_partition();
-}
-
-static int _read(long offset, uint8_t *buf, size_t size)
-{
-    int ret = size;
-
-    if (offset < 0)
-    {
-        return 0;
-    }
-
-    if (offset + size > FLASH_SIZE)
-    {
-        return 0;
-    }
-
-    memcpy(buf, (uint8_t *)flash_mem + offset, size);
-    return ret;
-}
-
-static int _write(long offset, const uint8_t *buf, size_t size)
-{
-    // 不支持写入
-    return 0;
-}
-
-static int _erase(long offset, size_t size)
-{
-    // 不支持擦除
-    return 0;
-}
-
-struct fal_flash_dev virt_parts = {
-    .name = VIRT_PARTS_FLASH_DEV_NAME,
-    .addr = 0x0,             // address is relative to beginning of partition; 0x0 is start of the partition
-    .len = FLASH_SIZE,       // flash total size
-    .blk_size = SECTOR_SIZE, // blk size
-    .ops = {_init, _read, _write, _erase},
-    .write_gran = 1, // 1 byte write granularity
-};
