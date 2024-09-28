@@ -57,24 +57,45 @@ static int _init(void)
     master = mtd_get_master(mtd);
     snprintf(nor_flash0.name, FAL_DEV_NAME_MAX, "%s@%d", master->name, mtd->index);
 
-    put_mtd_device(mtd);
-
     return 0;
 }
 
 static int _read(long offset, uint8_t *buf, size_t size)
 {
     int ret = 0;
+    struct mtd_info *mtd = kvdb_mtd;
+
+    // pr_debug("_read offset: %ld, size: %zu\n", offset, size);
+
     LOCK();
 
+    ret = mtd_read(mtd, offset, size, &size, buf);
+    if (ret < 0)
+    {
+        pr_err("mtd_read fail.\n");
+        ret = -1;
+    }
+
     UNLOCK();
+
     return ret;
 }
 
 static int _write(long offset, const uint8_t *buf, size_t size)
 {
     int ret = 0;
+    struct mtd_info *mtd = kvdb_mtd;
+
+    // pr_debug("_write offset: %ld, size: %zu\n", offset, size);
+
     LOCK();
+
+    ret = mtd_write(mtd, offset, size, &size, buf);
+    if (ret < 0)
+    {
+        pr_err("mtd_write fail.\n");
+        ret = -1;
+    }
 
     UNLOCK();
     return ret;
@@ -83,9 +104,35 @@ static int _write(long offset, const uint8_t *buf, size_t size)
 static int _erase(long offset, size_t size)
 {
     int ret = 0;
+    struct mtd_info *mtd = kvdb_mtd;
+    struct erase_info *erase;
+
+    // pr_debug("_erase offset: %ld, size: %zu\n", offset, size);
+
+    erase = kzalloc(sizeof(struct erase_info), GFP_KERNEL);
+    if (!erase)
+        ret = -ENOMEM;
+
     LOCK();
 
+    erase->addr = offset;
+    erase->len = size;
+
+    ret = mtd_erase(mtd, erase);
+    if (ret < 0)
+    {
+        pr_err("mtd_erase fail.\n");
+        ret = -1;
+    }
+
     UNLOCK();
+
+    if (erase)
+    {
+        kfree(erase);
+        erase = NULL;
+    }
+
     return ret;
 }
 
@@ -101,7 +148,8 @@ struct fal_flash_dev nor_flash0 = {
 int fal_flash_nor_flash_detect(fal_partition_t parts)
 {
     // 没有找到分区
-    if (nor_flash0.len == 0) return 0;
+    if (nor_flash0.len == 0)
+        return 0;
 
     // store partition info
     strcpy(parts[0].flash_name, nor_flash0.name);

@@ -125,22 +125,22 @@ static int detect_partition(void)
     count++;
 #endif
 
-    // ret = fal_flash_nor_flash_detect(&parts[count]);
-    // if (ret < 0)
-    // {
-    //     pr_err("fal_flash_nor_flash_detect fail.\n");
-    //     return -1;
-    // }
-    // count += ret;
-
-    // 保底采用mem_blk模拟一个flash
-    ret = fal_flash_mem_blk_detect(&parts[count]);
+    ret = fal_flash_nor_flash_detect(&parts[count]);
     if (ret < 0)
     {
-        pr_err("fal_flash_mem_blk_detect fail.\n");
+        pr_err("fal_flash_nor_flash_detect fail.\n");
         return -1;
     }
     count += ret;
+
+    // // 保底采用mem_blk模拟一个flash
+    // ret = fal_flash_mem_blk_detect(&parts[count]);
+    // if (ret < 0)
+    // {
+    //     pr_err("fal_flash_mem_blk_detect fail.\n");
+    //     return -1;
+    // }
+    // count += ret;
 
     return count;
 }
