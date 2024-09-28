@@ -37,6 +37,8 @@ static struct mutex g_mem_blk_mutex;
 
 static int _init(void)
 {
+    mutex_init(&g_mem_blk_mutex);
+
     LOCK();
     memset(flash_mem, 0xFF, FLASH_SIZE);
     UNLOCK();
@@ -123,13 +125,13 @@ static int detect_partition(void)
     count++;
 #endif
 
-    ret = fal_flash_nor_flash_detect(&parts[count]);
-    if (ret < 0)
-    {
-        pr_err("fal_flash_nor_flash_detect fail.\n");
-        return -1;
-    }
-    count += ret;
+    // ret = fal_flash_nor_flash_detect(&parts[count]);
+    // if (ret < 0)
+    // {
+    //     pr_err("fal_flash_nor_flash_detect fail.\n");
+    //     return -1;
+    // }
+    // count += ret;
 
     // 保底采用mem_blk模拟一个flash
     ret = fal_flash_mem_blk_detect(&parts[count]);

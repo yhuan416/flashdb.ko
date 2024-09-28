@@ -1,13 +1,84 @@
 #include "kvdb.h"
 
+#include "flashdb.h"
+
 static int major;
 static int minor;
 static dev_t devid;
 
 static struct cdev kvdb_cdev;
 static struct device *kvdb_device;
-
 static struct file_operations kvdb_fops;
+
+static struct fdb_kvdb g_kvdb;
+static struct mutex g_kvdb_mutex;
+
+static uint32_t boot_count = 0;
+static uint32_t boot_time[10] = {0, 1, 2, 3};
+static struct fdb_default_kv_node default_kv_table[] = {
+    {"username", "armink", 0},                       /* string KV */
+    {"password", "123456", 0},                       /* string KV */
+    {"boot_count", &boot_count, sizeof(boot_count)}, /* int type KV */
+    {"boot_time", &boot_time, sizeof(boot_time)},    /* int array type KV */
+};
+
+static void g_kvdb_lock(fdb_db_t db)
+{
+    struct mutex *_mutex = (struct mutex *)db->user_data;
+    mutex_lock(_mutex);
+}
+
+static void g_kvdb_unlock(fdb_db_t db)
+{
+    struct mutex *_mutex = (struct mutex *)db->user_data;
+    mutex_unlock(_mutex);
+}
+
+#ifdef DEBUG
+extern void kvdb_basic_sample(fdb_kvdb_t kvdb);
+extern void kvdb_type_blob_sample(fdb_kvdb_t kvdb);
+extern void kvdb_type_string_sample(fdb_kvdb_t kvdb);
+
+void kvdb_sample(void)
+{
+    kvdb_basic_sample(&g_kvdb);
+    kvdb_type_blob_sample(&g_kvdb);
+    kvdb_type_string_sample(&g_kvdb);
+}
+#else
+void kvdb_sample(void)
+{
+}
+#endif
+
+static int kvdb_init(void)
+{
+    fdb_err_t result;
+    struct fdb_default_kv default_kv;
+
+    pr_debug("flashdb: kvdb init.\n");
+
+    mutex_init(&g_kvdb_mutex);
+
+    default_kv.kvs = default_kv_table;
+    default_kv.num = sizeof(default_kv_table) / sizeof(default_kv_table[0]);
+
+    fdb_kvdb_control(&g_kvdb, FDB_KVDB_CTRL_SET_LOCK, g_kvdb_lock);
+    fdb_kvdb_control(&g_kvdb, FDB_KVDB_CTRL_SET_UNLOCK, g_kvdb_unlock);
+
+    result = fdb_kvdb_init(&g_kvdb, "kvdb", "kvdb", &default_kv, (void *)&g_kvdb_mutex);
+    if (result != FDB_NO_ERR)
+    {
+        pr_err("flashdb: kvdb init failed!\r\n");
+        return -1;
+    }
+
+    pr_info("flashdb: kvdb init success.\r\n");
+
+    kvdb_sample();
+
+    return 0;
+}
 
 int kvdb_create(struct class *class)
 {
@@ -48,7 +119,7 @@ int kvdb_create(struct class *class)
         goto del_unregister;
     }
 
-    return 0;
+    return kvdb_init();
 
 del_unregister:
     unregister_chrdev_region(devid, 1);

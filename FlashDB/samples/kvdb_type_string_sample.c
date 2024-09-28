@@ -12,7 +12,6 @@
  */
 
 #include <flashdb.h>
-#include <string.h>
 
 #ifdef FDB_USING_KVDB
 

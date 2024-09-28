@@ -21,7 +21,6 @@ MODULE_OBJECTS += main.o common.o kvdb.o
 
 # 编译选项
 EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror
-EXTRA_CFLAGS += -DDEBUG
 
 FLASHDB_PATH := $(PWD)/FlashDB
 
@@ -47,6 +46,15 @@ MODULE_OBJECTS += FlashDB/src/fdb_kvdb.o
 MODULE_OBJECTS += FlashDB/src/fdb_tsdb.o
 MODULE_OBJECTS += FlashDB/src/fdb_utils.o
 MODULE_OBJECTS += FlashDB/src/fdb.o
+
+ifeq ($(type), Debug)
+
+EXTRA_CFLAGS += -DDEBUG
+
+# FlashDB samples
+MODULE_OBJECTS += FlashDB/samples/kvdb_basic_sample.o FlashDB/samples/kvdb_type_blob_sample.o FlashDB/samples/kvdb_type_string_sample.o
+
+endif
 
 obj-m := $(MODULE_NAME).o
 $(MODULE_NAME)-y := $(MODULE_OBJECTS)
