@@ -2,7 +2,7 @@ ifeq ($(target_os), stm32mp13x)
 
 ARCH := arm
 CROSS_COMPILE := arm-none-linux-gnueabihf-
-KERNEL := /home/yhuan/stm32mp135/linux/linux-5.15.24
+KERNEL := /home/yhuan/workspace/stm32mp13/linux/linux-5.15.24
 EXTRA_CFLAGS += -D__stm32mp13x__
 
 else

@@ -22,7 +22,7 @@ static struct class *class;
 static ssize_t partition_show(struct class *class, struct class_attribute *attr,
                        char *buf)
 {
-    return fal_print_part_table(buf, PAGE_SIZE);
+    return 0;//fal_print_part_table(buf, PAGE_SIZE);
 }
 static CLASS_ATTR_RO(partition);
 

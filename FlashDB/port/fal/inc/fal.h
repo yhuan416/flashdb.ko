@@ -115,8 +115,6 @@ int fal_partition_erase_all(const struct fal_partition *part);
  */
 void fal_show_part_table(void);
 
-size_t fal_print_part_table(char *buf, size_t len);
-
 /* =============== API provided to RT-Thread =============== */
 /**
  * create RT-Thread block device by specified partition

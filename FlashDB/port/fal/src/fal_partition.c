@@ -110,50 +110,6 @@ void fal_show_part_table(void)
     log_i("=============================================================");
 }
 
-/**
- * print the partition table to buffer
- */
-size_t fal_print_part_table(char *buf, size_t len)
-{
-    char *item1 = "name", *item2 = "flash_dev";
-    size_t i, part_name_max = strlen(item1), flash_dev_name_max = strlen(item2);
-    const struct fal_partition *part;
-    size_t buf_len = 0;
-
-    if (partition_table_len)
-    {
-        for (i = 0; i < partition_table_len; i++)
-        {
-            part = &partition_table[i];
-            if (strlen(part->name) > part_name_max)
-            {
-                part_name_max = strlen(part->name);
-            }
-            if (strlen(part->flash_name) > flash_dev_name_max)
-            {
-                flash_dev_name_max = strlen(part->flash_name);
-            }
-        }
-    }
-    buf_len += snprintf(buf + buf_len, len - buf_len, "==================== FAL partition table ====================\n");
-    buf_len += snprintf(buf + buf_len, len - buf_len, "| %-*.*s | %-*.*s |   offset   |    length  |\n", part_name_max, FAL_DEV_NAME_MAX, item1, flash_dev_name_max,
-            FAL_DEV_NAME_MAX, item2);
-    buf_len += snprintf(buf + buf_len, len - buf_len, "-------------------------------------------------------------\n");
-    for (i = 0; i < partition_table_len; i++)
-    {
-#ifdef FAL_PART_HAS_TABLE_CFG
-        part = &partition_table[i];
-#else
-        part = &partition_table[partition_table_len - i - 1];
-#endif
-        buf_len += 
-           snprintf(buf + buf_len, len - buf_len, "| %-*.*s | %-*.*s | 0x%08lx | 0x%08x |\n", part_name_max, FAL_DEV_NAME_MAX, part->name, flash_dev_name_max,
-                FAL_DEV_NAME_MAX, part->flash_name, part->offset, part->len);
-    }
-    buf_len += snprintf(buf + buf_len, len - buf_len, "=============================================================\n");
-    return buf_len;
-}
-
 static int check_and_update_part_cache(const struct fal_partition *table, size_t len)
 {
     const struct fal_flash_dev *flash_dev = NULL;
