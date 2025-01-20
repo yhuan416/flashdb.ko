@@ -5,6 +5,13 @@ CROSS_COMPILE := arm-none-linux-gnueabihf-
 KERNEL := /home/yhuan/workspace/stm32mp13/linux/linux-5.15.24
 EXTRA_CFLAGS += -D__stm32mp13x__
 
+else ifeq ($(target_os), wsl2)
+
+ARCH := x86
+CROSS_COMPILE := 
+KERNEL := /home/yhuan/workspace/wsl/WSL2-Linux-Kernel-linux-msft-wsl-5.15.167.4
+EXTRA_CFLAGS += -D__wsl2__
+
 else
 
 ARCH := arm
@@ -20,7 +27,7 @@ MODULE_NAME = flashdb
 MODULE_OBJECTS += main.o common.o kvdb.o
 
 # 编译选项
-EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror
+EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror -Wno-format
 
 FLASHDB_PATH := $(PWD)/FlashDB
 
@@ -30,7 +37,6 @@ CONFIG_DEBUG_LOGS := y
 # porting
 EXTRA_CFLAGS += -I$(PWD)/porting/inc
 MODULE_OBJECTS += porting/fal_flash_virt_parts.o
-MODULE_OBJECTS += porting/fal_flash_kvdb_mem.o
 MODULE_OBJECTS += porting/fal_flash_kvdb_norflash.o
 
 # Fal
@@ -49,7 +55,7 @@ MODULE_OBJECTS += FlashDB/src/fdb.o
 
 ifeq ($(type), Debug)
 
-EXTRA_CFLAGS += -DDEBUG
+EXTRA_CFLAGS += -DDEBUG -DFAL_DEBUG=1 -DFDB_DEBUG_ENABLE
 
 # FlashDB samples
 MODULE_OBJECTS += FlashDB/samples/kvdb_basic_sample.o FlashDB/samples/kvdb_type_blob_sample.o FlashDB/samples/kvdb_type_string_sample.o

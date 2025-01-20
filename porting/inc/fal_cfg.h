@@ -18,15 +18,13 @@
 
 /* ===================== Flash device Configuration ========================= */
 extern struct fal_flash_dev virt_parts;
-extern struct fal_flash_dev mem_blk;
 extern struct fal_flash_dev nor_flash0;
 
 /* flash device table */
 #define FAL_FLASH_DEV_TABLE \
     {                       \
-        &virt_parts,        \
-        &mem_blk,           \
         &nor_flash0,        \
+        &virt_parts,        \
     }
 /* ===================== Flash device Configuration ========================= */
 

@@ -41,7 +41,7 @@
 //#define FDB_PRINT(...) ESP_LOGI("fdb", __VA_ARGS__)
 
 /* print debug information */
-#define FDB_DEBUG_ENABLE
+// #define FDB_DEBUG_ENABLE
 
 
 

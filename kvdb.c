@@ -34,22 +34,17 @@ static void g_kvdb_unlock(fdb_db_t db)
     mutex_unlock(_mutex);
 }
 
-#ifdef DEBUG
-extern void kvdb_basic_sample(fdb_kvdb_t kvdb);
-extern void kvdb_type_blob_sample(fdb_kvdb_t kvdb);
-extern void kvdb_type_string_sample(fdb_kvdb_t kvdb);
-
 void kvdb_sample(void)
 {
+#if defined(DEBUG) && defined(DEBUG_SAMPLE)
+    extern void kvdb_basic_sample(fdb_kvdb_t kvdb);
+    extern void kvdb_type_blob_sample(fdb_kvdb_t kvdb);
+    extern void kvdb_type_string_sample(fdb_kvdb_t kvdb);
     kvdb_basic_sample(&g_kvdb);
     kvdb_type_blob_sample(&g_kvdb);
     kvdb_type_string_sample(&g_kvdb);
-}
-#else
-void kvdb_sample(void)
-{
-}
 #endif
+}
 
 static int kvdb_init(void)
 {

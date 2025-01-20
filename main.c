@@ -65,7 +65,7 @@ static int __init _driver_init(void)
 {
     int ret;
 
-    pr_info("flashdb init.\n");
+    pr_info("flashdb: init.\n");
 
     _print_params();
 

@@ -24,9 +24,14 @@ static struct mutex g_mem_blk_mutex;
 #define UNLOCK()
 #endif
 
-static struct mtd_info *kvdb_mtd = NULL;
+struct mtd_info *kvdb_mtd = NULL;
 struct fal_flash_dev nor_flash0;
 
+/**
+ * @brief 初始化flash设备
+ *
+ * @return int
+ */
 static int _init(void)
 {
     struct mtd_info *mtd = NULL;
@@ -49,17 +54,26 @@ static int _init(void)
     pr_debug("\t erasesize: %u\n", mtd->erasesize);
     pr_debug("\t writesize: %u\n", mtd->writesize);
     pr_debug("\t offset: %llu\n", mtd_get_master_ofs((struct mtd_info *)mtd, 0));
+    master = mtd_get_master(mtd);
 
     nor_flash0.len = mtd->size;
     nor_flash0.blk_size = mtd->erasesize;
-    kvdb_mtd = mtd;
-
-    master = mtd_get_master(mtd);
     snprintf(nor_flash0.name, FAL_DEV_NAME_MAX, "%s@%d", master->name, mtd->index);
+
+    // 保存mtd信息
+    kvdb_mtd = mtd;
 
     return 0;
 }
 
+/**
+ * @brief 读操作
+ *
+ * @param offset
+ * @param buf
+ * @param size
+ * @return int
+ */
 static int _read(long offset, uint8_t *buf, size_t size)
 {
     int ret = 0;
@@ -81,6 +95,14 @@ static int _read(long offset, uint8_t *buf, size_t size)
     return ret;
 }
 
+/**
+ * @brief 写操作
+ *
+ * @param offset
+ * @param buf
+ * @param size
+ * @return int
+ */
 static int _write(long offset, const uint8_t *buf, size_t size)
 {
     int ret = 0;
@@ -101,6 +123,13 @@ static int _write(long offset, const uint8_t *buf, size_t size)
     return ret;
 }
 
+/**
+ * @brief 擦除操作
+ *
+ * @param offset
+ * @param size
+ * @return int
+ */
 static int _erase(long offset, size_t size)
 {
     int ret = 0;
@@ -149,14 +178,17 @@ int fal_flash_nor_flash_detect(fal_partition_t parts)
 {
     // 没有找到分区
     if (nor_flash0.len == 0)
-        return 0;
+    {
+        pr_err("fal_flash_nor_flash_detect: no partition found.\n");
+        return 1;
+    }
 
     // store partition info
-    strcpy(parts[0].flash_name, nor_flash0.name);
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].name, param_part_name);
+    strcpy(parts[0].flash_name, nor_flash0.name);
+    strcpy(parts[0].name, "kvdb");
     parts[0].offset = 0;
     parts[0].len = nor_flash0.len;
 
-    return 1;
+    return 0;
 }
