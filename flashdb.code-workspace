@@ -20,6 +20,8 @@
             "**/*.mod.*": true,
             "**/*.symvers": true,
             "**/*.order": true,
+
+            "flashdb.ko": true,
         },
         "files.associations": {
             "typeinfo": "c",

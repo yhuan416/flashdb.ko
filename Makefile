@@ -24,7 +24,7 @@ endif
 MODULE_NAME = flashdb
 
 # 源文件
-MODULE_OBJECTS += main.o common.o kvdb.o
+MODULE_OBJECTS += main.o kvdb.o
 
 # 编译选项
 EXTRA_CFLAGS += -DFDB_LKM -I$(PWD) -Wall -Werror -Wno-format
@@ -36,8 +36,8 @@ CONFIG_DEBUG_LOGS := y
 
 # porting
 EXTRA_CFLAGS += -I$(PWD)/porting/inc
-MODULE_OBJECTS += porting/fal_flash_virt_parts.o
-MODULE_OBJECTS += porting/fal_flash_kvdb_norflash.o
+MODULE_OBJECTS += porting/fal_flash_virt_parts_new.o
+MODULE_OBJECTS += porting/fal_flash_linux_port.o
 
 # Fal
 EXTRA_CFLAGS += -I$(FLASHDB_PATH)/port/fal/inc

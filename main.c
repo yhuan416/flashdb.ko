@@ -14,6 +14,10 @@
 #include "common.h"
 #include "kvdb.h"
 
+char param_part_name[FAL_DEV_NAME_MAX] = "mtdram test device";
+module_param_string(part, param_part_name, FAL_DEV_NAME_MAX, 0);
+MODULE_PARM_DESC(part, "Partition name of flashdb (Default: kvdb).");
+
 static struct class *class;
 
 /**
@@ -58,7 +62,7 @@ static struct class *flashdb_create_class(void)
 static inline void _print_params(void)
 {
     pr_info("flashdb: part_name = %s, part_size = %d, mtd_name = %s\r\n",
-            param_part_name, param_part_size, param_mtd_name);
+            param_part_name, NULL, NULL);
 }
 
 static int __init _driver_init(void)

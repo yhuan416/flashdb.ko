@@ -56,6 +56,7 @@ static int _init(void)
     pr_debug("\t offset: %llu\n", mtd_get_master_ofs((struct mtd_info *)mtd, 0));
     master = mtd_get_master(mtd);
 
+    // mtd设备直接作为flash设备管理
     nor_flash0.len = mtd->size;
     nor_flash0.blk_size = mtd->erasesize;
     snprintf(nor_flash0.name, FAL_DEV_NAME_MAX, "%s@%d", master->name, mtd->index);

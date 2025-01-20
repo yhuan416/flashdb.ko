@@ -103,25 +103,26 @@ struct fal_flash_dev virt_parts = {
     .write_gran = 1, // 1 byte write granularity
 };
 
-static int detect_partition(void)
+extern int fal_flash_nor_flash_detect(fal_partition_t parts);
+int detect_partition(void)
 {
-    int ret = 0;
-    int count = 0;
-    struct mtd_info *mtd = NULL;
-    struct mtd_info *master = NULL;
+    // int ret = 0;
+    // int count = 0;
+    // struct mtd_info *mtd = NULL;
+    // struct mtd_info *master = NULL;
 
     pr_debug("virt_parts start detect partition.\n");
 
     parts = (fal_partition_t)flash_mem;
 
-    // store the partition of virt_parts
+    // 保存虚拟分区表本体
     parts[0].magic_word = FAL_PART_MAGIC_WORD;
     strcpy(parts[0].name, "tables");
     strcpy(parts[0].flash_name, VIRT_PARTS_FLASH_DEV_NAME);
     parts[0].offset = 0;
     parts[0].len = FLASH_SIZE;
 
-    extern int fal_flash_nor_flash_detect(fal_partition_t parts);
+    // 保存分区表
     fal_flash_nor_flash_detect(&parts[1]);
 
     return 0;
