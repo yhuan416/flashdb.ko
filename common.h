@@ -17,8 +17,6 @@
 #define DEV_NAME "kvdb"   // 设备名
 #define CLASS_NAME "flashdb" // 类名
 
-// extern int param_part_size;
 extern char param_part_name[];
-// extern char param_mtd_name[];
 
 #endif // __COMMON_H__

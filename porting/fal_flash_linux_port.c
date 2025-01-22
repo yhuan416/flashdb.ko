@@ -7,17 +7,20 @@
 #define LOCKER_ENABLE
 
 #ifdef LOCKER_ENABLE
-static struct mutex g_mem_blk_mutex;
+
+// 静态初始化一个 s_mem_blk_mutex
+static DEFINE_MUTEX(s_mem_blk_mutex); // 定义并初始化 mutex
+
 #define LOCK()                        \
     do                                \
     {                                 \
-        mutex_lock(&g_mem_blk_mutex); \
+        mutex_lock(&s_mem_blk_mutex); \
     } while (0)
 
 #define UNLOCK()                        \
     do                                  \
     {                                   \
-        mutex_unlock(&g_mem_blk_mutex); \
+        mutex_unlock(&s_mem_blk_mutex); \
     } while (0)
 #else
 #define LOCK()
@@ -26,6 +29,8 @@ static struct mutex g_mem_blk_mutex;
 
 struct mtd_info *kvdb_mtd = NULL;
 struct fal_flash_dev nor_flash0;
+
+fal_partition_t fal_flash_get_partition(void);
 
 /**
  * @brief 初始化flash设备
@@ -36,12 +41,9 @@ static int _init(void)
 {
     struct mtd_info *mtd = NULL;
     struct mtd_info *master = NULL;
+    fal_partition_t part = NULL;
 
-#ifdef LOCKER_ENABLE
-    // create a mutex
-    mutex_init(&g_mem_blk_mutex);
-#endif
-
+    // 获取mtd设备
     mtd = get_mtd_device_nm(param_part_name);
     if (IS_ERR(mtd))
     {
@@ -60,6 +62,18 @@ static int _init(void)
     nor_flash0.len = mtd->size;
     nor_flash0.blk_size = mtd->erasesize;
     snprintf(nor_flash0.name, FAL_DEV_NAME_MAX, "%s@%d", master->name, mtd->index);
+
+    // 保存虚拟分区表本体
+    part = fal_flash_get_partition();
+    if (part)
+    {
+        // 保存虚拟分区表本体
+        part->magic_word = FAL_PART_MAGIC_WORD;
+        strcpy(part->name, param_part_name);
+        strcpy(part->flash_name, nor_flash0.name);
+        part->offset = 0;
+        part->len = mtd->size;
+    }
 
     // 保存mtd信息
     kvdb_mtd = mtd;
@@ -175,21 +189,17 @@ struct fal_flash_dev nor_flash0 = {
     .write_gran = 1, // 1 byte write granularity
 };
 
-int fal_flash_nor_flash_detect(fal_partition_t parts)
+int fal_flash_linux_port_close(void)
 {
-    // 没有找到分区
-    if (nor_flash0.len == 0)
+    LOCK();
+
+    if (kvdb_mtd)
     {
-        pr_err("fal_flash_nor_flash_detect: no partition found.\n");
-        return 1;
+        put_mtd_device(kvdb_mtd);
+        kvdb_mtd = NULL;
     }
 
-    // store partition info
-    parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].flash_name, nor_flash0.name);
-    strcpy(parts[0].name, "kvdb");
-    parts[0].offset = 0;
-    parts[0].len = nor_flash0.len;
+    UNLOCK();
 
     return 0;
 }

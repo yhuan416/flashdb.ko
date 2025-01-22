@@ -122,9 +122,12 @@ del_unregister:
     return ret;
 }
 
+int fal_flash_linux_port_close(void);
 void kvdb_destory(struct class *class)
 {
     pr_debug("flashdb: kvdb destory.\n");
+
+    fal_flash_linux_port_close();
 
     device_destroy(class, devid);
     cdev_del(&kvdb_cdev);

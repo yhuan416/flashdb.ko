@@ -18,36 +18,37 @@
 static unsigned char flash_mem[FLASH_SIZE];
 
 // 分区表
+static int part_count = 0;
 static fal_partition_t parts;
 static volatile int partition_table_is_initialed = 0;
 
-static struct mutex g_mutex;
-#define LOCK()                        \
-    do                                \
-    {                                 \
-        mutex_lock(&g_mutex); \
-    } while (0)
-
-#define UNLOCK()                        \
-    do                                  \
-    {                                   \
-        mutex_unlock(&g_mutex); \
-    } while (0)
+// 静态初始化一个s_mutex
+static DEFINE_MUTEX(s_mutex); // 定义并初始化 mutex
 
 // 初始化
+fal_partition_t fal_flash_get_partition(void);
 static int _init(void)
 {
-    mutex_init(&g_mutex);
+    fal_partition_t part = NULL;
 
-    LOCK();
-    memset(flash_mem, 0xFF, FLASH_SIZE);
-    UNLOCK();
+    // 保存虚拟分区表本体
+    part = fal_flash_get_partition();
+    if (part == NULL)
+    {
+        return -1;
+    }
+
+    // 保存虚拟分区表本体
+    part->magic_word = FAL_PART_MAGIC_WORD;
+    strcpy(part->name, "tables");
+    strcpy(part->flash_name, VIRT_PARTS_FLASH_DEV_NAME);
+    part->offset = 0;
+    part->len = FLASH_SIZE;
 
     return 0;
 }
 
 // 读取
-static int detect_partition(void);
 static int _read(long offset, uint8_t *buf, size_t size)
 {
     int ret = 0;
@@ -61,17 +62,6 @@ static int _read(long offset, uint8_t *buf, size_t size)
     {
         return 0;
     }
-
-    LOCK();
-
-    // 懒加载, 初次进行读取的时候检测分区
-    if (!partition_table_is_initialed)
-    {
-        detect_partition();
-        partition_table_is_initialed = 1;
-    }
-
-    UNLOCK();
 
     memcpy(buf, (uint8_t *)flash_mem + offset, size);
     ret = size;
@@ -103,27 +93,24 @@ struct fal_flash_dev virt_parts = {
     .write_gran = 1, // 1 byte write granularity
 };
 
-extern int fal_flash_nor_flash_detect(fal_partition_t parts);
-int detect_partition(void)
+fal_partition_t fal_flash_get_partition(void)
 {
-    // int ret = 0;
-    // int count = 0;
-    // struct mtd_info *mtd = NULL;
-    // struct mtd_info *master = NULL;
+    fal_partition_t ret = NULL;
 
-    pr_debug("virt_parts start detect partition.\n");
+    mutex_lock(&s_mutex);
 
-    parts = (fal_partition_t)flash_mem;
+    if (partition_table_is_initialed == 0)
+    {
+        memset(flash_mem, 0xFF, FLASH_SIZE);
+        parts = (fal_partition_t)flash_mem;
 
-    // 保存虚拟分区表本体
-    parts[0].magic_word = FAL_PART_MAGIC_WORD;
-    strcpy(parts[0].name, "tables");
-    strcpy(parts[0].flash_name, VIRT_PARTS_FLASH_DEV_NAME);
-    parts[0].offset = 0;
-    parts[0].len = FLASH_SIZE;
+        partition_table_is_initialed = 1;
+    }
 
-    // 保存分区表
-    fal_flash_nor_flash_detect(&parts[1]);
+    ret = &parts[part_count];
+    part_count++;
 
-    return 0;
+    mutex_unlock(&s_mutex);
+
+    return ret;
 }

@@ -23,8 +23,8 @@ extern struct fal_flash_dev nor_flash0;
 /* flash device table */
 #define FAL_FLASH_DEV_TABLE \
     {                       \
-        &nor_flash0,        \
         &virt_parts,        \
+        &nor_flash0,        \
     }
 /* ===================== Flash device Configuration ========================= */
 
@@ -46,5 +46,9 @@ extern struct fal_flash_dev nor_flash0;
 #define FAL_FREE(ptr) kfree(ptr)
 
 #define FAL_PRINTF(...) printk(__VA_ARGS__)
+
+#define log_d(...) pr_debug(__VA_ARGS__)
+#define log_i(...) pr_info(__VA_ARGS__)
+#define log_e(...) pr_err(__VA_ARGS__)
 
 #endif /* _FAL_CFG_H_ */
