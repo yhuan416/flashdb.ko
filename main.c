@@ -14,10 +14,6 @@
 #include "common.h"
 #include "kvdb.h"
 
-#ifndef DEFAULT_KVDB_PART
-#define DEFAULT_KVDB_PART "kvdb"
-#endif
-
 char param_kvdb[FAL_DEV_NAME_MAX] = DEFAULT_KVDB_PART;
 module_param_string(kvdb, param_kvdb, FAL_DEV_NAME_MAX, 0);
 MODULE_PARM_DESC(kvdb, "Partition name of kvdb (Default: " DEFAULT_KVDB_PART ").");

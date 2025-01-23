@@ -40,10 +40,15 @@ extern struct fal_flash_dev nor_flash0;
 
 #define PRIdLEAST16 "d"
 
-#define FAL_MALLOC(s) kmalloc(s, GFP_KERNEL)
-#define FAL_CALLOC(n, s) kzalloc((n * s), GFP_KERNEL)
-#define FAL_REALLOC(p, s) krealloc(p, s, GFP_KERNEL)
-#define FAL_FREE(ptr) kfree(ptr)
+extern void *kvdb_malloc(size_t size);
+extern void *kvdb_calloc(size_t n, size_t size);
+extern void *kvdb_realloc(void *ptr, size_t size);
+extern void kvdb_free(void *ptr);
+
+#define FAL_MALLOC(s) kvdb_malloc(s)
+#define FAL_CALLOC(n, s) kvdb_calloc(n, s)
+#define FAL_REALLOC(p, s) kvdb_realloc(p, s)
+#define FAL_FREE(ptr) kvdb_free(ptr)
 
 #define FAL_PRINTF(...) printk(__VA_ARGS__)
 

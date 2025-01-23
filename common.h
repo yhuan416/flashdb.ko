@@ -12,10 +12,12 @@
 #define FAL_PART_MAGIC_WORD (0x45503130)
 #endif
 
-#define DEV_MAJOR (0)        // 主设备号
-#define NODE_NAME "flashdb"  // 设备节点名
-#define DEV_NAME "kvdb"   // 设备名
 #define CLASS_NAME "flashdb" // 类名
+
+// 默认kvdb分区
+#ifndef DEFAULT_KVDB_PART
+#define DEFAULT_KVDB_PART "kvdb"
+#endif
 
 extern char param_kvdb[];
 

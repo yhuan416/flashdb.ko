@@ -156,6 +156,28 @@ void *kvdb_malloc(size_t size)
     return NULL;
 }
 
+void *kvdb_calloc(size_t n, size_t size)
+{
+    if (kvdb_device)
+        return devm_kcalloc(kvdb_device, n, size, GFP_KERNEL);
+
+    return NULL;
+}
+
+void *kvdb_realloc(void *ptr, size_t size)
+{
+    if (kvdb_device)
+        return devm_krealloc(kvdb_device, ptr, size, GFP_KERNEL);
+
+    return NULL;
+}
+
+void kvdb_free(void *ptr)
+{
+    if (kvdb_device)
+        devm_kfree(kvdb_device, ptr);
+}
+
 static int _open(struct inode *inode, struct file *filp)
 {
     pr_info("kvdb open\r\n");
