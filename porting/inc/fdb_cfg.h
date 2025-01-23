@@ -89,6 +89,9 @@ typedef long long int intmax_t; // 定义 intmax_t 为内核的 __intmax_t
 
 #define FDB_PRINT(...) printk(__VA_ARGS__)
 
+#define FDB_INFO(...) pr_info(__VA_ARGS__)
+#define FDB_DEBUG(...) pr_debug(__VA_ARGS__)
+
 #include <uapi/asm-generic/errno-base.h>
 
 #endif /* _FDB_CFG_H_ */

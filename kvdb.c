@@ -11,7 +11,9 @@ static struct device *kvdb_device;
 static struct file_operations kvdb_fops;
 
 static struct fdb_kvdb g_kvdb;
-static struct mutex g_kvdb_mutex;
+
+// 静态初始化一个 g_kvdb_mutex
+static DEFINE_MUTEX(g_kvdb_mutex); // 定义并初始化 mutex
 
 static uint32_t boot_count = 0;
 static uint32_t boot_time[10] = {0, 1, 2, 3};
@@ -53,15 +55,13 @@ static int kvdb_init(void)
 
     pr_debug("flashdb: kvdb init.\n");
 
-    mutex_init(&g_kvdb_mutex);
-
     default_kv.kvs = default_kv_table;
     default_kv.num = sizeof(default_kv_table) / sizeof(default_kv_table[0]);
 
     fdb_kvdb_control(&g_kvdb, FDB_KVDB_CTRL_SET_LOCK, g_kvdb_lock);
     fdb_kvdb_control(&g_kvdb, FDB_KVDB_CTRL_SET_UNLOCK, g_kvdb_unlock);
 
-    result = fdb_kvdb_init(&g_kvdb, "kvdb", "kvdb", &default_kv, (void *)&g_kvdb_mutex);
+    result = fdb_kvdb_init(&g_kvdb, "kvdb", param_kvdb, &default_kv, (void *)&g_kvdb_mutex);
     if (result != FDB_NO_ERR)
     {
         pr_err("flashdb: kvdb init failed!\r\n");
@@ -111,15 +111,27 @@ int kvdb_create(struct class *class)
     if (IS_ERR(kvdb_device))
     {
         pr_err("flashdb: kvdb device create failed!\r\n");
-        goto del_unregister;
+        goto del_cdev_del;
     }
 
-    return kvdb_init();
+    // 初始化kvdb
+    if (kvdb_init()) {
+        pr_err("flashdb: kvdb init failed!\r\n");
+        goto del_device_destroy;
+    }
+
+    return 0;
+
+del_device_destroy:
+    device_destroy(class, devid);
+
+del_cdev_del:
+    cdev_del(&kvdb_cdev);
 
 del_unregister:
     unregister_chrdev_region(devid, 1);
 
-    return ret;
+    return -EFAULT;
 }
 
 int fal_flash_linux_port_close(void);
@@ -128,6 +140,8 @@ void kvdb_destory(struct class *class)
     pr_debug("flashdb: kvdb destory.\n");
 
     fal_flash_linux_port_close();
+
+    fdb_kvdb_deinit(&g_kvdb);
 
     device_destroy(class, devid);
     cdev_del(&kvdb_cdev);

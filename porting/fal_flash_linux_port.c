@@ -44,7 +44,7 @@ static int _init(void)
     fal_partition_t part = NULL;
 
     // 获取mtd设备
-    mtd = get_mtd_device_nm(param_part_name);
+    mtd = get_mtd_device_nm(param_kvdb);
     if (IS_ERR(mtd))
     {
         pr_err("get_mtd_device_nm fail.\n");
@@ -69,7 +69,7 @@ static int _init(void)
     {
         // 保存虚拟分区表本体
         part->magic_word = FAL_PART_MAGIC_WORD;
-        strcpy(part->name, param_part_name);
+        strcpy(part->name, param_kvdb);
         strcpy(part->flash_name, nor_flash0.name);
         part->offset = 0;
         part->len = mtd->size;

@@ -14,19 +14,24 @@
 #include "common.h"
 #include "kvdb.h"
 
-char param_part_name[FAL_DEV_NAME_MAX] = "mtdram test device";
-module_param_string(part, param_part_name, FAL_DEV_NAME_MAX, 0);
-MODULE_PARM_DESC(part, "Partition name of flashdb (Default: kvdb).");
+#ifndef DEFAULT_KVDB_PART
+#define DEFAULT_KVDB_PART "kvdb"
+#endif
+
+char param_kvdb[FAL_DEV_NAME_MAX] = DEFAULT_KVDB_PART;
+module_param_string(kvdb, param_kvdb, FAL_DEV_NAME_MAX, 0);
+MODULE_PARM_DESC(kvdb, "Partition name of kvdb (Default: " DEFAULT_KVDB_PART ").");
 
 static struct class *class;
 
 /**
  * flashdb类的partition属性, 用于打印分区表
  */
+ssize_t fal_show_part_table_buf(char *buf, size_t len);
 static ssize_t partition_show(struct class *class, struct class_attribute *attr,
-                       char *buf)
+                              char *buf)
 {
-    return 0;//fal_print_part_table(buf, PAGE_SIZE);
+    return fal_show_part_table_buf(buf, PAGE_SIZE);
 }
 static CLASS_ATTR_RO(partition);
 
@@ -61,8 +66,7 @@ static struct class *flashdb_create_class(void)
  */
 static inline void _print_params(void)
 {
-    pr_info("flashdb: part_name = %s, part_size = %d, mtd_name = %s\r\n",
-            param_part_name, NULL, NULL);
+    pr_info("flashdb: param_kvdb = %s\r\n", param_kvdb);
 }
 
 static int __init _driver_init(void)
@@ -89,18 +93,9 @@ static int __init _driver_init(void)
         goto destroy_class;
     }
 
-    // 初始化fal
-    ret = fal_init();
-    if (ret < 0)
-    {
-        pr_err("fal init failed!\r\n");
-        goto unregister_kvdb;
-    }
+    pr_info("flashdb: init done.\n");
 
     return 0;
-
-unregister_kvdb:
-    kvdb_destory(class);
 
 destroy_class:
     class_destroy(class);
@@ -110,7 +105,7 @@ destroy_class:
 
 static void __exit _driver_exit(void)
 {
-    pr_info("flashdb exit.\n");
+    pr_info("flashdb: exit.\n");
 
     kvdb_destory(class);
 

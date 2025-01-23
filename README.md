@@ -10,6 +10,12 @@ CROSS_COMPILE: toolchain
 make ARCH=arm CROSS_COMPILE=arm-none-linux-gnueabihf- KERNEL=/home/yhuan/workspace/stm32mp13/linux/linux-5.15.24
 ```
 
+``` sh
+sudo insmod flashdb.ko [kvdb=kvdb]
+
+kvdb: 用于指定kvdb的分区, 默认为'kvdb'
+```
+
 ---
 TODO:
 - [x] 支持MTD Flash读写操作
